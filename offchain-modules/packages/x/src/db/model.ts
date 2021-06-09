@@ -1,5 +1,7 @@
 import { getRepository } from 'typeorm';
 import { ChainType } from '../ckb/model/asset';
+import { AdaLock } from './entity/AdaLock';
+import { AdaUnlock } from './entity/AdaUnlock';
 import { BtcLock } from './entity/BtcLock';
 import { BtcUnlock } from './entity/BtcUnlock';
 import { CkbBurn } from './entity/CkbBurn';
@@ -10,7 +12,6 @@ import { EthLock } from './entity/EthLock';
 import { EthUnlock } from './entity/EthUnlock';
 import { TronLock } from './entity/TronLock';
 import { TronUnlock } from './entity/TronUnlock';
-
 // export { EthUnlock, EthLock, BtcLock, BtcUnlock, EosLock, EosUnlock, CkbMint, CkbBurn, TronLock, TronUnlock };
 
 export { EthUnlock } from './entity/EthUnlock';
@@ -23,6 +24,8 @@ export { CkbMint } from './entity/CkbMint';
 export { CkbBurn } from './entity/CkbBurn';
 export { TronLock } from './entity/TronLock';
 export { TronUnlock } from './entity/TronUnlock';
+export { AdaUnlock } from './entity/AdaUnlock';
+export { AdaLock } from './entity/AdaLock';
 
 export interface ICkbMint {
   id: string;
@@ -80,7 +83,7 @@ export interface ITronUnlock {
   recipientAddress: string;
 }
 
-export type XchainUnlock = EthUnlock | BtcUnlock | EosUnlock;
+export type XchainUnlock = EthUnlock | BtcUnlock | EosUnlock | AdaUnlock;
 
 export async function transformBurnEvent(burn: CkbBurn): Promise<XchainUnlock> {
   throw new Error('Method not implemented.');
@@ -141,6 +144,26 @@ export function EosLock2CkbMint(record: IEosLock): CkbMint {
 }
 
 export interface IBtcLock {
+  txid: string;
+  txHash: string;
+  sender: string;
+  amount: string;
+  rawTx: string;
+  data: string;
+  blockHeight: number;
+  blockHash: string;
+  txIndex: number;
+}
+
+export interface IAdaUnLock {
+  ckbTxHash: string;
+  chain: number;
+  asset: string;
+  amount: string;
+  recipientAddress: string;
+}
+
+export interface IAdaLock {
   txid: string;
   txHash: string;
   sender: string;
