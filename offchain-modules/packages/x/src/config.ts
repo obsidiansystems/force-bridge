@@ -28,6 +28,7 @@ export interface CkbConfig {
     sudtType: ConfigItem;
   };
   startBlockHeight: number;
+  confirmNumber: number;
 }
 
 export interface EthConfig {
@@ -75,6 +76,20 @@ export interface BtcConfig {
   confirmNumber: number;
 }
 
+export interface AdaConfig {
+  clientParams: {
+    url: string;
+    user: string;
+    pass: string;
+    port: number;
+    timeout?: number;
+  };
+  privateKeys: string[];
+  lockAddress: string;
+  startBlockHeight: number;
+  confirmNumber: number;
+}
+
 export interface rpcConfig {
   port: number;
   corsOptions?: {
@@ -103,4 +118,5 @@ export interface Config {
   tron?: TronConfig;
   btc?: BtcConfig;
   rpc?: rpcConfig;
+  ada?: AdaConfig;
 }
