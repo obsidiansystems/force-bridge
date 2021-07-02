@@ -7,6 +7,7 @@ export enum ChainType {
   EOS,
   TRON,
   POLKADOT,
+  ADA,
 }
 
 export abstract class Asset {
@@ -84,6 +85,26 @@ export class BtcAsset extends Asset {
   constructor(public address: string, public ownLockHash: string) {
     super();
     this.chainType = ChainType.BTC;
+  }
+
+  toBridgeLockscriptArgs(): string {
+    const params = {
+      owner_lock_hash: fromHexString(this.ownLockHash).buffer,
+      chain: this.chainType,
+      asset: fromHexString(toHexString(stringToUint8Array(this.address))).buffer,
+    };
+    return `0x${toHexString(new Uint8Array(SerializeForceBridgeLockscriptArgs(params)))}`;
+  }
+
+  getAddress(): string {
+    return this.address;
+  }
+}
+
+export class AdaAsset extends Asset {
+  constructor(public address: string, public ownLockHash: string) {
+    super();
+    this.chainType = ChainType.ADA;
   }
 
   toBridgeLockscriptArgs(): string {

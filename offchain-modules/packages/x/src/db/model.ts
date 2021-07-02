@@ -165,14 +165,9 @@ export interface IAdaUnLock {
 
 export interface IAdaLock {
   txid: string;
-  txHash: string;
   sender: string;
   amount: string;
-  rawTx: string;
   data: string;
-  blockHeight: number;
-  blockHash: string;
-  txIndex: number;
 }
 
 export interface IBtcUnLock {

@@ -1,81 +1,32 @@
 export type AdaLockData = {
   txId: string;
-  txHash: string;
   sender: string;
-  txIndex: number;
   amount: string;
   data: string;
-  rawTx: string;
-  blockHeight: number;
-  blockHash: string;
 };
 export type AdaUnlockResult = {
-  txHash: string;
-  startBlockHeight: number;
+  txId: string;
 };
 
 export type AdaTx = {
-  txHash: string;
-  startBlockHeight: number;
+  txId: string;
 };
 
-export interface IBlock {
-  hash: string;
-  confirmations?: number;
-  merkleroot?: string;
-  height: number;
-  tx: ITx[];
-  chainwork?: string;
-  difficulty?: string;
-}
+export type IInput = {
+  address: string;
+  amount: IAmount;
+  assets: Array<any>;
+  id: string;
+  index: number;
+};
 
-export interface ITx {
-  txid: string;
-  hash: string;
-  vin: IVin[];
-  vout: IVout[];
-  hex: string;
-  blockhash?: string;
-}
+export type IOutput = {
+  address: string;
+  amount: IAmount;
+  assets: Array<any>;
+};
 
-export interface IVin {
-  sequence: number;
-  coinbase?: string;
-  txid?: string;
-  vout?: number;
-}
-
-export interface IscriptSig {
-  asm: string;
-  hex: string;
-}
-
-export interface IVout {
-  value: string;
-  n: string;
-  scriptPubKey: IScriptPubKey;
-}
-export interface IScriptPubKey {
-  asm: string;
-  hex: string;
-  type: string;
-  addresses?: string[];
-}
-
-export interface IBalance {
-  height: number;
-  unspents: IUnspents[];
-  total_amount: string;
-}
-export interface IUnspents {
-  txid: string;
-  vout: number;
-  amount: string;
-  height: string;
-}
-
-export interface MainnetFee {
-  fastestFee: number;
-  halfHourFee: number;
-  hourFee: number;
-}
+export type IAmount = {
+  quantity: number;
+  unit: string;
+};

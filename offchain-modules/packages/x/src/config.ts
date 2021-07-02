@@ -84,9 +84,19 @@ export interface AdaConfig {
     port: number;
     timeout?: number;
   };
-  privateKeys: string[];
+  wallet: {
+    name: string;
+    mnemonic_sentence: string;
+    passphrase: string;
+    public_key: string;
+  };
+  user: {
+    name: string;
+    mnemonic_sentence: string;
+    passphrase: string;
+    public_key: string;
+  };
   lockAddress: string;
-  startBlockHeight: number;
   confirmNumber: number;
 }
 

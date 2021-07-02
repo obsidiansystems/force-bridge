@@ -98,7 +98,8 @@
     "trongrid": "^1.2.6",
     "tronweb": "^3.2.3",
     "typeorm": "^0.2.32",
-    "typeorm-naming-strategies": "^2.0.0"
+    "typeorm-naming-strategies": "^2.0.0",
+    "cardano-wallet-js": "1.2.3"
   },
   "ava": {
     "files": [

@@ -1,7 +1,7 @@
 import { Script as LumosScript } from '@ckb-lumos/base';
 import { Address, AddressType, Amount, HashType, Script } from '@lay2/pw-core';
 import { Account } from '../ckb/model/accounts';
-import { Asset, BtcAsset, ChainType, EosAsset, EthAsset, TronAsset } from '../ckb/model/asset';
+import { AdaAsset, Asset, BtcAsset, ChainType, EosAsset, EthAsset, TronAsset } from '../ckb/model/asset';
 import { IndexerCollector } from '../ckb/tx-helper/collector';
 import { RecipientCellData } from '../ckb/tx-helper/generated/eth_recipient_cell';
 import { CkbTxGenerator, MintAssetRecord } from '../ckb/tx-helper/generator';
@@ -54,6 +54,17 @@ export class CkbHandler {
       switch (burn.chain) {
         case ChainType.BTC:
           await this.db.createBtcUnlock([
+            {
+              ckbTxHash: burn.ckbTxHash,
+              asset: burn.asset,
+              amount: burn.amount,
+              chain: burn.chain,
+              recipientAddress: burn.recipientAddress,
+            },
+          ]);
+          break;
+        case ChainType.ADA:
+          await this.db.createAdaUnlock([
             {
               ckbTxHash: burn.ckbTxHash,
               asset: burn.asset,
@@ -213,6 +224,7 @@ export class CkbHandler {
         case ChainType.TRON:
         case ChainType.ETH:
         case ChainType.EOS:
+        case ChainType.ADA:
           burn = {
             senderLockHash: v.senderLockScriptHash,
             ckbTxHash: k,
@@ -274,6 +286,9 @@ export class CkbHandler {
     switch (cellData.getChain()) {
       case ChainType.BTC:
         asset = new BtcAsset(uint8ArrayToString(fromHexString(assetAddress)), ownLockHash);
+        break;
+      case ChainType.ADA:
+        asset = new AdaAsset(uint8ArrayToString(fromHexString(assetAddress)), ownLockHash);
         break;
       case ChainType.ETH:
         asset = new EthAsset(uint8ArrayToString(fromHexString(assetAddress)), ownLockHash);
@@ -390,6 +405,12 @@ export class CkbHandler {
       case ChainType.BTC:
         return {
           asset: new BtcAsset(r.asset, ownLockHash),
+          recipient: new Address(r.recipientLockscript, AddressType.ckb),
+          amount: new Amount(r.amount, 0),
+        };
+      case ChainType.ADA:
+        return {
+          asset: new AdaAsset(r.asset, ownLockHash),
           recipient: new Address(r.recipientLockscript, AddressType.ckb),
           amount: new Amount(r.amount, 0),
         };

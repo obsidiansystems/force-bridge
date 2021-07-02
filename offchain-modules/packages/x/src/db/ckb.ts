@@ -4,11 +4,13 @@ import { ForceBridgeCore } from '../core';
 import { dbTxStatus } from './entity/CkbMint';
 import {
   BtcUnlock,
+  AdaUnlock,
   CkbBurn,
   CkbMint,
   EosUnlock,
   EthUnlock,
   IBtcUnLock,
+  IAdaUnLock,
   ICkbBurn,
   IEosUnlock,
   IEthUnlock,
@@ -97,6 +99,12 @@ export class CkbDb {
     const btcUnlockRepo = this.connection.getRepository(BtcUnlock);
     const dbRecords = records.map((r) => btcUnlockRepo.create(r));
     await btcUnlockRepo.save(dbRecords);
+  }
+
+  async createAdaUnlock(records: IAdaUnLock[]): Promise<void> {
+    const adaUnlockRepo = this.connection.getRepository(AdaUnlock);
+    const dbRecords = records.map((r) => adaUnlockRepo.create(r));
+    await adaUnlockRepo.save(dbRecords);
   }
 
   async removeUnconfirmedCkbBurn(confirmedBlockHeight: number): Promise<DeleteResult> {

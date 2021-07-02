@@ -5,9 +5,6 @@ export class AdaLock {
   @PrimaryColumn()
   txid: string;
 
-  @Column()
-  txHash: string;
-
   @Index()
   @Column()
   sender: string;
@@ -16,19 +13,10 @@ export class AdaLock {
   amount: string;
 
   @Column()
+  status: string;
+
+  @Column()
   data: string;
-
-  @Column('text')
-  rawTx: string;
-
-  @Column()
-  blockHeight: number;
-
-  @Column()
-  blockHash: string;
-
-  @Column()
-  txIndex: number;
 
   @CreateDateColumn()
   createdAt: string;

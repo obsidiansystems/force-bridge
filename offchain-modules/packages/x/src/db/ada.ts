@@ -26,11 +26,6 @@ export class AdaDb implements IQuery {
     this.adaUnlockRepository = connection.getRepository(AdaUnlock);
   }
 
-  async getLatestHeight(): Promise<number> {
-    const rawRes = await this.connection.manager.query('select max(block_height) as max_block_number from btc_lock');
-    return rawRes[0].max_block_number || ForceBridgeCore.config.ada.startBlockHeight;
-  }
-
   async createCkbMint(records: ICkbMint[]): Promise<void> {
     const dbRecords = records.map((r) => this.ckbMintRepository.create(r));
     await this.ckbMintRepository.save(dbRecords);
@@ -58,9 +53,9 @@ export class AdaDb implements IQuery {
     });
   }
 
-  async getLockRecordByHash(adaLockHash: string): Promise<AdaLock[]> {
+  async getLockRecordById(adaLockId: string): Promise<AdaLock[]> {
     return await this.adaLockRepository.find({
-      txHash: adaLockHash,
+      txid: adaLockId,
     });
   }
 
@@ -77,20 +72,19 @@ export class AdaDb implements IQuery {
     return await this.connection
       .getRepository(CkbMint)
       .createQueryBuilder('ckb')
-      .innerJoinAndSelect('btc_lock', 'btc', 'btc.txid = ckb.id')
+      .innerJoinAndSelect('ada_lock', 'ada', 'ada.txid = ckb.id')
       .where('ckb.recipient_lockscript = :recipient  AND ckb.asset = :asset', {
         recipient: ckbRecipientAddr,
         asset: XChainAsset,
       })
       .select(
         `
-        btc.sender as sender,
-        ckb.recipient_lockscript as recipient,
-        btc.amount as lock_amount,
+        ada.sender as sender,
+        ada.amount as lock_amount,
         ckb.amount as mint_amount,
-        btc.txid as lock_hash,
+        ada.txid as lock_hash,
         ckb.mint_hash as mint_hash,
-        btc.updated_at as lock_time, 
+        ada.updated_at as lock_time, 
         ckb.updated_at as mint_time, 
         ckb.status as status,
         ckb.asset as asset,
@@ -105,7 +99,7 @@ export class AdaDb implements IQuery {
     return await this.connection
       .getRepository(CkbBurn)
       .createQueryBuilder('ckb')
-      .innerJoinAndSelect('btc_unlock', 'btc', 'btc.ckb_tx_hash = ckb.ckb_tx_hash')
+      .innerJoinAndSelect('ada_unlock', 'ada', 'ada.ckb_tx_hash = ckb.ckb_tx_hash')
       .where('ckb.sender_lock_hash = :sender_lock_hash AND ckb.asset = :asset', {
         sender_lock_hash: ckbLockScriptHash,
         asset: XChainAsset,
@@ -114,16 +108,16 @@ export class AdaDb implements IQuery {
       .select(
         `
         ckb.sender_lock_hash as sender, 
-        btc.recipient_address as recipient , 
+        ada.recipient_address as recipient , 
         ckb.amount as burn_amount, 
-        btc.amount as unlock_amount,
+        ada.amount as unlock_amount,
         ckb.ckb_tx_hash as burn_hash,
-        btc.btc_tx_hash as unlock_hash,
-        btc.updated_at as unlock_time, 
+        ada.ada_tx_hash as unlock_hash,
+        ada.updated_at as unlock_time, 
         ckb.updated_at as burn_time, 
-        btc.status as status,
+        ada.status as status,
         ckb.asset as asset,
-        btc.message as message
+        ada.message as message
       `,
       )
       .orderBy('ckb.updated_at', 'DESC')
@@ -134,17 +128,17 @@ export class AdaDb implements IQuery {
     return await this.connection
       .getRepository(CkbMint)
       .createQueryBuilder('ckb')
-      .innerJoinAndSelect('btc_lock', 'btc', 'btc.txid = ckb.id')
-      .where('btc.sender = :sender AND ckb.asset = :asset', { sender: XChainSender, asset: XChainAsset })
+      .innerJoinAndSelect('ada_lock', 'ada', 'ada.txid = ckb.id')
+      .where('ada.sender = :sender AND ckb.asset = :asset', { sender: XChainSender, asset: XChainAsset })
       .select(
         `
-        btc.sender as sender,
+        ada.sender as sender,
         ckb.recipient_lockscript as recipient,
-        btc.amount as lock_amount,
+        ada.amount as lock_amount,
         ckb.amount as mint_amount,
-        btc.txid as lock_hash,
+        ada.txid as lock_hash,
         ckb.mint_hash as mint_hash,
-        btc.updated_at as lock_time, 
+        ada.updated_at as lock_time, 
         ckb.updated_at as mint_time, 
         ckb.status as status,
         ckb.asset as asset,
@@ -159,7 +153,7 @@ export class AdaDb implements IQuery {
     return await this.connection
       .getRepository(CkbBurn)
       .createQueryBuilder('ckb')
-      .innerJoinAndSelect('btc_unlock', 'btc', 'btc.ckb_tx_hash = ckb.ckb_tx_hash')
+      .innerJoinAndSelect('ada_unlock', 'ada', 'ada.ckb_tx_hash = ckb.ckb_tx_hash')
       .where('ckb.recipient_address = :recipient_address AND ckb.asset = :asset', {
         recipient_address: XChainRecipientAddr,
         asset: XChainAsset,
@@ -167,16 +161,16 @@ export class AdaDb implements IQuery {
       .select(
         `
         ckb.sender_lock_hash as sender, 
-        btc.recipient_address as recipient , 
+        ada.recipient_address as recipient , 
         ckb.amount as burn_amount, 
-        btc.amount as unlock_amount,
+        ada.amount as unlock_amount,
         ckb.ckb_tx_hash as burn_hash,
-        btc.btc_tx_hash as unlock_hash,
-        btc.updated_at as unlock_time, 
+        ada.ada_tx_hash as unlock_hash,
+        ada.updated_at as unlock_time, 
         ckb.updated_at as burn_time, 
-        btc.status as status,
+        ada.status as status,
         ckb.asset as asset,
-        btc.message as message
+        ada.message as message
       `,
       )
       .orderBy('ckb.updated_at', 'DESC')

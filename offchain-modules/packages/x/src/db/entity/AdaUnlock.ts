@@ -21,7 +21,7 @@ export class AdaUnlock {
   recipientAddress: string;
 
   @Column({ nullable: true })
-  btcTxHash: string;
+  adaTxId: string;
 
   @Column({ default: 'todo' })
   status: AdaUnlockStatus;
