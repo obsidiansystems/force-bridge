@@ -1,14 +1,17 @@
 import { createConnection } from 'typeorm';
 import { ForceBridgeCore } from '../core';
 import { CkbDb, EthDb, KVDb, TronDb } from '../db';
+import { AdaDb } from '../db/ada';
 import { BtcDb } from '../db/btc';
 import { EosDb } from '../db/eos';
+import { AdaHandler } from '../handlers/ada';
 import { BtcHandler } from '../handlers/btc';
 import { CkbHandler } from '../handlers/ckb';
 import { EosHandler } from '../handlers/eos';
 import { EthHandler } from '../handlers/eth';
 import { TronHandler } from '../handlers/tron';
 import { parsePrivateKey } from '../utils';
+import { ADAChain } from '../xchain/ada';
 import { BTCChain } from '../xchain/btc';
 import { EthChain } from '../xchain/eth';
 
@@ -68,5 +71,14 @@ export async function startHandlers() {
     const btcChain = new BTCChain();
     const btcHandler = new BtcHandler(btcDb, btcChain, role);
     btcHandler.start();
+  }
+  if (ForceBridgeCore.config.ada !== undefined) {
+    // if (isCollector) {
+    //   ForceBridgeCore.config.ada.wallet = ForceBridgeCore.config.ada.wallet;
+    // }
+    const adaDb = new AdaDb(conn);
+    const adaChain = new ADAChain();
+    const adaHandler = new AdaHandler(adaDb, adaChain, role);
+    adaHandler.start();
   }
 }

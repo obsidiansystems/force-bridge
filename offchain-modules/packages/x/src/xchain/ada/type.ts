@@ -1,8 +1,9 @@
 export type AdaLockData = {
   txId: string;
   sender: string;
-  amount: string;
+  amount: number;
   data: string;
+  status: string;
 };
 export type AdaUnlockResult = {
   txId: string;

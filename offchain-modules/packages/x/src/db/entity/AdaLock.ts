@@ -1,5 +1,5 @@
 import { Column, CreateDateColumn, Entity, Index, PrimaryColumn, UpdateDateColumn } from 'typeorm';
-
+export type AdaLockStatus = 'pending' | 'submitted' | 'in_ledger' | 'in_ledger';
 @Entity()
 export class AdaLock {
   @PrimaryColumn()
@@ -10,7 +10,7 @@ export class AdaLock {
   sender: string;
 
   @Column()
-  amount: string;
+  amount: number;
 
   @Column()
   status: string;

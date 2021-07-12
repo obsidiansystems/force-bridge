@@ -17,7 +17,7 @@ import { Amount, Script } from '@lay2/pw-core';
 import CKB from '@nervosnetwork/ckb-sdk-core';
 import { WalletServer, AddressWallet, TransactionWallet } from 'cardano-wallet-js';
 import nconf from 'nconf';
-import { createConnection } from 'typeorm';
+import { createConnection, Connection } from 'typeorm';
 import { waitFnCompleted, waitUntilCommitted } from './util';
 // const CKB = require('@nervosnetwork/ckb-sdk-core').default;
 
@@ -26,12 +26,10 @@ const CKB_INDEXER_URL = process.env.CKB_INDEXER_URL || 'http://127.0.0.1:8116';
 const indexer = new CkbIndexer(CKB_URL, CKB_INDEXER_URL);
 const collector = new IndexerCollector(indexer);
 const ckb = new CKB(CKB_URL);
+const log = console.log;
 
 async function main() {
   logger.debug('start ada test lock and unlock');
-
-  const conn = await createConnection();
-  const adaDb = new AdaDb(conn);
 
   const configPath = process.env.CONFIG_PATH || './config.json';
   nconf.env().file({ file: configPath });
@@ -51,26 +49,31 @@ async function main() {
   const adaChain = new ADAChain();
 
   // transfer to multisigAddr
-  const wallets = wallet.getAddresses();
+  const totalBalance = await wallet.getAvailableBalance();
+  console.log({ totalBalance });
+  const wallets = await wallet.getAddresses();
   const userAddr = wallets[0].id;
-  logger.debug(`user address: ${userAddr.toString()}`);
-  const amounts = [5000000];
+  log(`user address: ${userAddr.toString()}`);
+  const amt = 5000000;
+  const amounts = [amt];
   // transfer from miner to user addr
-  const faucetTx: TransactionWallet = await wallet.sendPayment(
-    ForceBridgeCore.config.ada.user.passphrase,
-    [new AddressWallet(ForceBridgeCore.config.ada.lockAddress)],
-    amounts,
-  );
+  // const faucetTx: TransactionWallet = await wallet.sendPayment(
+  //   ForceBridgeCore.config.ada.user.passphrase,
+  //   [new AddressWallet(ForceBridgeCore.config.ada.lockAddress)],
+  //   amounts,
+  // );
 
+  // log({ faucetTx });
   const LockEventReceipent = 'ckt1qyqyph8v9mclls35p6snlaxajeca97tc062sa5gahk';
-  const lockAmount = 5000000;
+  const lockAmount = amt; //5 ada
   const lockTxId = await adaChain.sendLockTxs(
     ForceBridgeCore.config.ada.user.public_key,
     lockAmount,
     ForceBridgeCore.config.ada.user.passphrase,
   );
-  logger.info(`user ${userAddr.toString()} lock 5000000 ada; the lock tx hash is ${lockTxId}.`);
-  const waitTimeout = 1000 * 60 * 5;
+  logger.info(`user ${userAddr.toString()} lock 5 ada; the lock tx id is ${lockTxId}.`);
+  const waitTimeout = 1000 * 60 * 10;
+  const conn: Connection = await createConnection();
   await waitFnCompleted(
     waitTimeout,
     async (): Promise<boolean> => {
@@ -84,12 +87,15 @@ async function main() {
           id: lockTxId,
         },
       });
+      
+      log('adaLockRecords', adaLockRecords);
+      log('CkbMintRecords', ckbMintRecords);
       if (adaLockRecords.length == 0 || ckbMintRecords.length === 0) {
+        log('No record found for this transaction...');
         return false;
       }
 
-      logger.info('adaLockRecords', adaLockRecords);
-      logger.info('CkbMintRecords', ckbMintRecords);
+      
 
       assert(adaLockRecords.length === 1);
       const adaLockRecord: any = adaLockRecords[0];
@@ -133,7 +139,7 @@ async function main() {
     1000 * 10,
   );
 
-  const burnAmount = new Amount('100000', 0);
+  const burnAmount = new Amount('2000000', 0);
   // const account = new Account(PRI_KEY);
   // const ownLockHash = ckb.utils.scriptToHash(<CKBComponents.Script>await account.getLockscript());
   const generator = new CkbTxGenerator(ckb, new IndexerCollector(indexer));
@@ -187,6 +193,7 @@ async function main() {
     1000 * 10,
   );
 
+  const adaDb = new AdaDb(conn);
   const lockRecords: AdaLock[] = await adaDb.getLockRecordById(lockTxId);
   logger.info(`successful lock records ${JSON.stringify(lockRecords, null, 2)}`);
   const unlockRecords: AdaUnlock[] = await adaDb.getAdaUnlockRecords('success');

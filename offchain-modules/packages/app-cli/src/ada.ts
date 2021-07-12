@@ -32,10 +32,10 @@ adaCmd
 adaCmd
   .command('balanceOf')
   .requiredOption('-id, --id', 'id of the account')
-  .requiredOption('-addr, --address', 'address on btc or ckb')
-  .option('-o, --origin', 'whether query balance on btc')
+  .requiredOption('-a, --address', 'address on ada or ckb')
+  .option('-o, --origin', 'whether query balance on ada')
   .action(doBalanceOf)
-  .description('query balance of address on btc or ckb');
+  .description('query balance of address on ada or ckb');
 
 async function doLock(
   opts: {

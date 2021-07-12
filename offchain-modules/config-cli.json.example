@@ -29,7 +29,8 @@
       },
       "lockAddress": "2N1VV17PQAQbNNicsoQhyUbiLciJwYLadfW"
     },
-   "clientParams": {
+    "ada":{
+      "clientParams": {
             "url": "http://34.230.223.133",
             "user": "test",
             "pass": "test",
@@ -49,7 +50,8 @@
           "mnemonic_sentence":"hip dust material keen buddy fresh thank program stool ill regret honey multiply venture imitate",
           "passphrase":"passphrase",
           "public_key":"452afe41ec60ed8162de702e84d92dd199dc406b"
-        },
+        }
+    },
     "ckb": {
       "ckbRpcUrl": "http://47.56.233.149:3054",
       "ckbIndexerUrl": "http://47.56.233.149:3056",

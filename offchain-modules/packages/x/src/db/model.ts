@@ -166,8 +166,9 @@ export interface IAdaUnLock {
 export interface IAdaLock {
   txid: string;
   sender: string;
-  amount: string;
+  amount: number;
   data: string;
+  status: string;
 }
 
 export interface IBtcUnLock {

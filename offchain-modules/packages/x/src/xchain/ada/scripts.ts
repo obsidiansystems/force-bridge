@@ -1,11 +1,32 @@
-import { WalletServer, AddressWallet } from 'cardano-wallet-js';
+import { WalletServer, AddressWallet, Transaction } from 'cardano-wallet-js';
+import { createConnection } from 'typeorm';
 import { ForceBridgeCore } from '../../core';
+import { AdaDb } from '../../db/ada';
+import { AdaLockStatus } from '../../db/entity/AdaLock';
 import { AdaUnlock } from '../../db/entity/AdaUnlock';
 import { logger } from '../../utils/logger';
 import { AdaLockData, AdaUnlockResult, IInput, IOutput } from '../../xchain/ada/type';
-
 let walletServer;
 const CkbTxHashLen = 64;
+const log = console.log;
+
+export type AdaTransaction = {
+  id: string;
+  amount: any;
+  fee: any;
+  deposit: any;
+  direction: any;
+  inserted_at: any;
+  expires_at: any;
+  pending_since: any;
+  depth: any;
+  inputs: Array<any>;
+  outputs: Array<any>;
+  withdrawals: Array<any>;
+  mint: Array<any>;
+  status: AdaLockStatus;
+  metadata: any;
+};
 export class ADAChain {
   protected readonly config;
   constructor() {
@@ -23,29 +44,49 @@ export class ADAChain {
    * @param handleUnlockAsyncFunc
    */
   async watchAdaTxEvents(handleLockAsyncFunc, handleUnlockAsyncFunc) {
-    //get all transactions
-    const wallet = await walletServer.getShelleyWallet(ForceBridgeCore.config.ada.wallet.public_key);
-    const transactions = await wallet.getTransactions();
-    for (let i = 0; i < transactions.length; i++) {
-      //if out is our address and transaction status is "in_ledger" then call handle LockAsync Function
-      const ckbBurnTxHashes: string[] = await this.getUnlockTxData(transactions[i].inputs, transactions[i].outputs);
-      if (ckbBurnTxHashes.length != 0) {
-        logger.debug(
-          `verify for unlock event. transaction ${transactions[i].id} tx . find ckb burn hashes:  ${ckbBurnTxHashes}`,
-        );
-        for (let i = 0; i < ckbBurnTxHashes.length; i++) {
-          await handleUnlockAsyncFunc(ckbBurnTxHashes[i]);
+    //get all pending status events from db
+    const conn = await createConnection();
+    const adaDb = new AdaDb(conn);
+
+    const records = await adaDb.getAdaLockRecords('pending');
+    if (records.length == 0) {
+      log('no pending events to watch from...');
+      return;
+    } else {
+      //checking the status of those id;
+      const transactionDetails = await this.getTransactionDetailsFromId(records[0].sender, records[0].txid);
+
+      log({ transactionDetails });
+      if (transactionDetails.status == 'in_ledger') {
+        // status has been changed for transction.
+        log('Event has been changes....');
+        await adaDb.updateAdaLockRecords(transactionDetails.id, transactionDetails.status);
+        if (records[0].sender == ForceBridgeCore.config.ada.wallet.public_key) {
+          //matching account id
+          //todo
+          //if sender is our address , we need to trigger ckb burn
+          const ckbBurnTxHashes: string[] = await this.getUnlockTxData(
+            transactionDetails.inputs,
+            transactionDetails.outputs,
+          );
+          log(
+            `verify for unlock event. transaction ${transactionDetails.id} tx . find ckb burn hashes:  ${ckbBurnTxHashes}`,
+          );
+          for (let i = 0; i < ckbBurnTxHashes.length; i++) {
+            await handleUnlockAsyncFunc(ckbBurnTxHashes[i]);
+          }
+        } else {
+          //if sender address is not our address then we need to trigger ckb mint
+          const data: AdaLockData = {
+            txId: records[0].txid,
+            amount: records[0].amount,
+            data: records[0].data,
+            sender: records[0].sender,
+            status: transactionDetails.status,
+          };
+          log(`verify for lock event. ada lock data: ${JSON.stringify(data, null, 2)}`);
+          await handleLockAsyncFunc(data);
         }
-      }
-      if (this.isLockTx(transactions[i].outputs)) {
-        const data: AdaLockData = {
-          txId: transactions[i].txid,
-          amount: transactions[i].amount.quantity,
-          data: transactions[i].metadata.join(''),
-          sender: transactions[i].outputs[0].address,
-        };
-        logger.debug(`verify for lock event. btc lock data: ${JSON.stringify(data, null, 2)}`);
-        await handleLockAsyncFunc(data);
       }
     }
   }
@@ -57,19 +98,23 @@ export class ADAChain {
    * @param {string} passphrase, to import wallet so that we can send payment as authorized personal
    */
   async sendLockTxs(id: string, amount: number, passphrase: string): Promise<string> {
-    logger.debug(`lock tx params: amount ${amount}.`);
+    log(`lock tx params: amount ${amount}.`);
     //need to lock the amount using transaction and then sign the transaction.
 
     //need to fetch the amount before locking the amount.
     const wallet = await walletServer.getShelleyWallet(id);
+    log({ wallet });
+    const totalBalance = await wallet.getAvailableBalance();
+    log({ totalBalance });
     try {
       // receiver address
       //checking if the amount is good to proceed with or not
       const address = new AddressWallet(ForceBridgeCore.config.ada.lockAddress);
       const estimatedFees = await wallet.estimateFee([address], [amount]);
-      logger.debug(`Transaction fee for locking the amount ${amount} ada is : ${estimatedFees}`);
-      console.log({ estimatedFees });
+      log(`Transaction fee for locking the amount ${amount} ada is : ${estimatedFees}`);
+      log({ estimatedFees });
     } catch (e) {
+      log({ e });
       throw new Error('Insufficient balance..');
     }
 
@@ -78,7 +123,21 @@ export class ADAChain {
     const amounts = [amount];
 
     const transaction: any = await wallet.sendPayment(passphrase, addresses, amounts);
-    logger.debug(`user lock ${amount} ada; transactions details are ${transaction}`);
+    log(`user lock ${amount} ada; transactions details are ${transaction}`);
+
+    //need to create a record with cardano transaction status
+    const conn = await createConnection();
+    const adaDb = new AdaDb(conn);
+    await adaDb.createAdaLock([
+      {
+        txid: transaction.id,
+        sender: id,
+        amount: amount,
+        data: '',
+        status: 'pending',
+      },
+    ]);
+    conn.close();
     return transaction.id;
   }
 
@@ -93,11 +152,11 @@ export class ADAChain {
     if (records.length > 2) {
       throw new Error('the limit of op_return output size is 80 bytes which can contain 2 ckb tx hash (32*2 bytes)');
     }
-    logger.debug('database records which need exec unlock:', records);
+    log('database records which need exec unlock:', records);
     //fetch balance from locked wallet
     const wallet = await walletServer.getShelleyWallet(ForceBridgeCore.config.ada.wallet.public_key);
-    const balance = wallet.getAvailableBalance();
-    logger.debug(`collect live utxos for unlock: ${JSON.stringify(balance, null, 2)}`);
+    const balance = await wallet.getAvailableBalance();
+    log(`collect live balance: ${JSON.stringify(balance, null, 2)}`);
 
     //need to fetch record from database, burnt the balance on CKB and release the token on ada chain.
     const accounts = [];
@@ -111,15 +170,15 @@ export class ADAChain {
       // receiver address
       //checking if the amount is good to proceed with or not
       const estimatedFees = await wallet.estimateFee(accounts, amounts);
-      logger.debug(`Transaction fee for Unlocking the transaction is : ${estimatedFees}`);
-      console.log({ estimatedFees });
+      log(`Transaction fee for Unlocking the transaction is : ${estimatedFees}`);
+      log({ estimatedFees });
 
       const transaction: any = await wallet.sendPayment(
         ForceBridgeCore.config.ada.wallet.passphrase,
         accounts,
         amounts,
       );
-      logger.debug(`user Unlock ada; transactions details are ${transaction}`);
+      log(`user Unlock ada; transactions details are ${transaction}`);
       return transaction.id;
     } catch (e) {
       throw new Error('Insufficient balance..');
@@ -139,7 +198,7 @@ export class ADAChain {
     for (let i = 0; i < waitVerifyTxVouts.length; i++) {
       const voutPubkeyHex = waitVerifyTxVouts[i].address;
       if (voutPubkeyHex) {
-        logger.debug(`verify op return output data : ${voutPubkeyHex}`);
+        log(`verify op return output data : ${voutPubkeyHex}`);
         return this.splitTxhash(voutPubkeyHex);
       }
     }
@@ -188,5 +247,12 @@ export class ADAChain {
   async createWallet(id) {
     const wallet = await walletServer.getShelleyWallet(id);
     return wallet;
+  }
+
+  async getTransactionDetailsFromId(id, transactionId): Promise<AdaTransaction> {
+    const wallet = await walletServer.getShelleyWallet(id);
+    const transaction = await wallet.getTransaction(transactionId);
+    console.log({ transaction });
+    return transaction;
   }
 }

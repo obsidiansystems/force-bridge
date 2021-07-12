@@ -1,6 +1,7 @@
 // invoke in ADA handler
 import { Connection, Not, Repository } from 'typeorm';
 import { ForceBridgeCore } from '../core';
+import { AdaLockStatus } from './entity/AdaLock';
 import { AdaUnlockStatus } from './entity/AdaUnlock';
 import {
   AdaLock,
@@ -65,6 +66,22 @@ export class AdaDb implements IQuery {
         status,
       },
       take,
+    });
+  }
+
+  async getAdaLockRecords(status: AdaLockStatus, take = 1): Promise<AdaLock[]> {
+    return this.adaLockRepository.find({
+      where: {
+        status,
+      },
+      take,
+    });
+  }
+
+  async updateAdaLockRecords(adaLockId: string, status: string): Promise<AdaLock> {
+    return this.adaLockRepository.save({
+      txid: adaLockId,
+      status,
     });
   }
 
