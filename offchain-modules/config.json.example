@@ -17,7 +17,7 @@
       "multiSignThreshold": 2,
       "contractAddress": "0x8326e1d621Cd32752920ed2A44B49bB1a96c7391",
       "confirmNumber": 1,
-      "startBlockHeight": 1
+      "startBlockHeight": 13
     },
     "eos": {
       "rpcUrl": "http://127.0.0.1:8888",
@@ -63,18 +63,18 @@
         "timeout": 10000
       },
       "wallet": {
-          "name": "wallet_1",
-          "mnemonic_sentence": "device taxi zero fruit home health still outer decrease round happy hazard trumpet dignity vessel",
-          "passphrase": "test_wallet_1",
-          "public_key": "75e86030bf4e28c0630f57fc67f08022a6439f45"
+        "name": "wallet_1",
+        "mnemonic_sentence": "device taxi zero fruit home health still outer decrease round happy hazard trumpet dignity vessel",
+        "passphrase": "test_wallet_1",
+        "public_key": "75e86030bf4e28c0630f57fc67f08022a6439f45"
       },
       "lockAddress": "addr_test1qrrje97wfgddhekdn7tfa2er6ngrz8vqft9p8m060xrlxzd0mkth4j39sdhx9c5ke8wl9vt6vemya6xxk7aue7wuauzqgtt0yq",
       "confirmNumber": 25,
-        "user": {
-          "name": "wallet_2",
-          "mnemonic_sentence": "immense fetch question humble model orange impulse sick mesh mix busy dream electric people useful",
-          "passphrase": "test_wallet_2",
-          "public_key": "38e91238f4a6cf1193c967be9124c551b46f5d77"
+      "user": {
+        "name": "wallet_2",
+        "mnemonic_sentence": "immense fetch question humble model orange impulse sick mesh mix busy dream electric people useful",
+        "passphrase": "test_wallet_2",
+        "public_key": "38e91238f4a6cf1193c967be9124c551b46f5d77"
       }
     },
     "ckb": {
@@ -87,7 +87,7 @@
           "cellDep": {
             "depType": "code",
             "outPoint": {
-              "txHash": "0xbbcbb5355d4604731027358c7baf25e5d9b3d20ddce4308cd835794aa5c409e4",
+              "txHash": "0x43c21a7d8976bacb8b2c0016c67c493962eaef2b21b49a889cc00889fb27d24b",
               "index": "0x0"
             }
           },
@@ -100,7 +100,7 @@
           "cellDep": {
             "depType": "code",
             "outPoint": {
-              "txHash": "0xbbcbb5355d4604731027358c7baf25e5d9b3d20ddce4308cd835794aa5c409e4",
+              "txHash": "0x43c21a7d8976bacb8b2c0016c67c493962eaef2b21b49a889cc00889fb27d24b",
               "index": "0x2"
             }
           },
@@ -113,17 +113,17 @@
           "cellDep": {
             "depType": "code",
             "outPoint": {
-              "txHash": "0xbbcbb5355d4604731027358c7baf25e5d9b3d20ddce4308cd835794aa5c409e4",
+              "txHash": "0x43c21a7d8976bacb8b2c0016c67c493962eaef2b21b49a889cc00889fb27d24b",
               "index": "0x3"
             }
           },
           "script": {
-            "codeHash": "0xccfc7603253b4d495d09fb6813d0ad2504a12b650e8640878234552e9cd503ee",
+            "codeHash": "0x275625d6c532c7f6e1609a04029dd3e2b03cd67c5430b6fcd609705b91ccb35c",
             "hashType": "data"
           }
         }
       },
-      "startBlockHeight": 1,
+      "startBlockHeight": 0,
       "confirmNumber": 1
     },
     "tron": {
