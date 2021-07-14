@@ -17,15 +17,23 @@ export class AdaHandler {
     log('start ADA watchLockEvents, with role ==> ', this.role);
     while (true) {
       try {
-        await asyncSleep(1000 * 60);
+        await asyncSleep(1000 * 15);
         //checking if we have enough confimation from the last record
         await this.adaChain.watchAdaTxEvents(
+          this.db,
           //need to be triggered when lock event is happened,
           //adding lock event status in database
           async (adaLockEventData: AdaLockData) => {
             log(`AdaHandler watchAdaTxEvents newEvents:${JSON.stringify(adaLockEventData, null, 2)}`);
 
             if (this.role === 'collector') {
+              log('CKB mint record ==>', {
+                id: adaLockEventData.txId,
+                chain: ChainType.ADA,
+                amount: adaLockEventData.amount.toString(),
+                asset: 'ada',
+                recipientLockscript: adaLockEventData.data.slice(0, CkbAddressLen),
+              });
               await this.db.createCkbMint([
                 {
                   id: adaLockEventData.txId,
@@ -116,7 +124,7 @@ export class AdaHandler {
 
   start() {
     this.watchLockEvents();
-    this.watchUnlockEvents();
+    // this.watchUnlockEvents();
     log('ADA handler started  🚀');
   }
 }

@@ -43,11 +43,9 @@ export class ADAChain {
    * @param handleLockAsyncFunc
    * @param handleUnlockAsyncFunc
    */
-  async watchAdaTxEvents(handleLockAsyncFunc, handleUnlockAsyncFunc) {
+  async watchAdaTxEvents(adaDb, handleLockAsyncFunc, handleUnlockAsyncFunc) {
     //get all pending status events from db
-    const conn = await createConnection();
-    const adaDb = new AdaDb(conn);
-
+    log('Starting lock monitoring...');
     const records = await adaDb.getAdaLockRecords('pending');
     if (records.length == 0) {
       log('no pending events to watch from...');
@@ -96,8 +94,9 @@ export class ADAChain {
    * @param {string} id, wallet id to get wallet details
    * @param {number} amount, amount to be send to other wallet
    * @param {string} passphrase, to import wallet so that we can send payment as authorized personal
+   * @param {string} data_ada, CKB address to gain token
    */
-  async sendLockTxs(id: string, amount: number, passphrase: string): Promise<string> {
+  async sendLockTxs(id: string, amount: number, passphrase: string, data_ada: string): Promise<string> {
     log(`lock tx params: amount ${amount}.`);
     //need to lock the amount using transaction and then sign the transaction.
 
@@ -128,15 +127,16 @@ export class ADAChain {
     //need to create a record with cardano transaction status
     const conn = await createConnection();
     const adaDb = new AdaDb(conn);
-    await adaDb.createAdaLock([
+    const data = await adaDb.createAdaLock([
       {
         txid: transaction.id,
         sender: id,
         amount: amount,
-        data: '',
+        data: data_ada,
         status: 'pending',
       },
     ]);
+    console.log({ data });
     conn.close();
     return transaction.id;
   }
@@ -244,11 +244,20 @@ export class ADAChain {
     return firstOutputAddr === ForceBridgeCore.config.ada.lockAddress;
   }
 
+  /**
+   * create wallet instance from account id
+   * @param id id of the wallet
+   */
   async createWallet(id) {
     const wallet = await walletServer.getShelleyWallet(id);
     return wallet;
   }
 
+  /**
+   * Fetch transaction details from the transaction id
+   * @param id wallet id
+   * @param transactionId transaction id
+   */
   async getTransactionDetailsFromId(id, transactionId): Promise<AdaTransaction> {
     const wallet = await walletServer.getShelleyWallet(id);
     const transaction = await wallet.getTransaction(transactionId);

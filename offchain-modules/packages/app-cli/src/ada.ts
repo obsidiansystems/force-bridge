@@ -57,7 +57,7 @@ async function doLock(
   const amount = options.get('amount');
   const userAddr = options.get('userAddr');
   const adaChain = new ADAChain();
-  const lockTxId = await adaChain.sendLockTxs(id, parseFloat(amount), passphrase);
+  const lockTxId = await adaChain.sendLockTxs(id, parseFloat(amount), passphrase, userAddr);
   logger.debug(`user ${userAddr} lock ${amount} ada. the lock tx id is ${lockTxId}`);
 
   if (opts.wait) {

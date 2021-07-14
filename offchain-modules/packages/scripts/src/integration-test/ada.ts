@@ -10,6 +10,7 @@ import { AdaDb } from '@force-bridge/x/dist/db/ada';
 import { AdaLock } from '@force-bridge/x/dist/db/entity/AdaLock';
 import { AdaUnlock } from '@force-bridge/x/dist/db/entity/AdaUnlock';
 import { CkbMint } from '@force-bridge/x/dist/db/entity/CkbMint';
+import { AdaHandler } from '@force-bridge/x/dist/handlers/ada';
 import { asyncSleep } from '@force-bridge/x/dist/utils';
 import { logger, initLog } from '@force-bridge/x/dist/utils/logger';
 import { ADAChain } from '@force-bridge/x/dist/xchain/ada';
@@ -47,7 +48,7 @@ async function main() {
   );
   const wallet = await client.getShelleyWallet(ForceBridgeCore.config.ada.user.public_key);
   const adaChain = new ADAChain();
-
+  const usrAddress = ''; //ckb address
   // transfer to multisigAddr
   const totalBalance = await wallet.getAvailableBalance();
   console.log({ totalBalance });
@@ -70,10 +71,16 @@ async function main() {
     ForceBridgeCore.config.ada.user.public_key,
     lockAmount,
     ForceBridgeCore.config.ada.user.passphrase,
+    usrAddress,
   );
   logger.info(`user ${userAddr.toString()} lock 5 ada; the lock tx id is ${lockTxId}.`);
   const waitTimeout = 1000 * 60 * 10;
   const conn: Connection = await createConnection();
+  const adaDb = new AdaDb(conn);
+  const role = ForceBridgeCore.config.common.role;
+  const adaHandler = new AdaHandler(adaDb, adaChain, role);
+  adaHandler.start();
+  await asyncSleep(1000 * 60 * 20);
   await waitFnCompleted(
     waitTimeout,
     async (): Promise<boolean> => {
@@ -87,7 +94,7 @@ async function main() {
           id: lockTxId,
         },
       });
-      
+
       log('adaLockRecords', adaLockRecords);
       log('CkbMintRecords', ckbMintRecords);
       if (adaLockRecords.length == 0 || ckbMintRecords.length === 0) {
@@ -95,11 +102,9 @@ async function main() {
         return false;
       }
 
-      
-
       assert(adaLockRecords.length === 1);
       const adaLockRecord: any = adaLockRecords[0];
-      assert(adaLockRecord.amount === lockAmount.toString());
+      assert(adaLockRecord.amount == lockAmount.toString());
 
       assert(ckbMintRecords.length === 1);
       const ckbMintRecord: any = ckbMintRecords[0];
@@ -193,7 +198,6 @@ async function main() {
     1000 * 10,
   );
 
-  const adaDb = new AdaDb(conn);
   const lockRecords: AdaLock[] = await adaDb.getLockRecordById(lockTxId);
   logger.info(`successful lock records ${JSON.stringify(lockRecords, null, 2)}`);
   const unlockRecords: AdaUnlock[] = await adaDb.getAdaUnlockRecords('success');
