@@ -48,7 +48,7 @@ async function main() {
   );
   const wallet = await client.getShelleyWallet(ForceBridgeCore.config.ada.user.public_key);
   const adaChain = new ADAChain();
-  const usrAddress = ''; //ckb address
+  const usrAddress = 'ckt1qyqwe2pz6d8nwfqdgr0gnzkdpm6w3xcm8q5qqz3hjw'; //ckb address
   // transfer to multisigAddr
   const totalBalance = await wallet.getAvailableBalance();
   console.log({ totalBalance });
@@ -58,6 +58,7 @@ async function main() {
   const amt = 5000000;
   const amounts = [amt];
   // transfer from miner to user addr
+  // commenting this as we have already funded faucet using website.
   // const faucetTx: TransactionWallet = await wallet.sendPayment(
   //   ForceBridgeCore.config.ada.user.passphrase,
   //   [new AddressWallet(ForceBridgeCore.config.ada.lockAddress)],
@@ -144,7 +145,7 @@ async function main() {
     1000 * 10,
   );
 
-  const burnAmount = new Amount('2000000', 0);
+  const burnAmount = new Amount(`${lockAmount}`, 0);
   // const account = new Account(PRI_KEY);
   // const ownLockHash = ckb.utils.scriptToHash(<CKBComponents.Script>await account.getLockscript());
   const generator = new CkbTxGenerator(ckb, new IndexerCollector(indexer));
