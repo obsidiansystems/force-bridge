@@ -1,5 +1,6 @@
 { pkgs ? import <nixpkgs> {}
 , capsule ? import ./nix/capsule {}
+, ckb-cli ? import ./nix/ckb-cli {}
 }:
 
 let
@@ -47,6 +48,8 @@ in pkgs.mkShell {
   buildInputs = [
     dockerCompat
     capsule
+    ckb-cli
+    pkgs.docker-compose
     pkgs.bash
     pkgs.podman  # Docker compat
     pkgs.runc  # Container runtime
@@ -54,6 +57,7 @@ in pkgs.mkShell {
     pkgs.skopeo  # Interact with container registry
     pkgs.slirp4netns  # User-mode networking for unprivileged namespaces
     pkgs.fuse-overlayfs  # CoW for images, much faster than default vfs
+    pkgs.nodejs
     pkgs.yarn
   ];
 
@@ -61,7 +65,8 @@ in pkgs.mkShell {
     # Install required configuration
     ${podmanSetupScript}
     ln -s /bin/bash ${pkgs.bash}/bin/bash
-    export DOCKER_HOST=unix:///run/podman/podman.sock # Oh yes
+    # export DOCKER_HOST=unix:///run/podman/podman.sock # Oh yes
   '';
 
+  DOCKER_HOST="unix:///run/podman/podman.sock";
 }
