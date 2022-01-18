@@ -68,7 +68,7 @@ docker exec docker_mysql_1 bash -c "mysql -uroot -proot -e 'create database <dat
 And to remove it:
 
 ``` bash
-docker exec docker_mysql_1 bash -c "mysql -uroot -proot -e 'drop database if exists <database>"
+docker exec docker_mysql_1 bash -c "mysql -uroot -proot -e 'drop database if exists <database>'"
 ```
 
 Where \<database\> is the database entry in the orm part of your config. We may change this to use something more our speed like postgresql, but for now this is what is in the box of force-bridge.
