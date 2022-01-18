@@ -11,7 +11,81 @@ A general new designed Force Bridge.
   Non-fungible token transfer. We plan to support EOS, TRON, BTC, Cardano and Polkadot in the first stage.
 - You have to trust the committee who runs the bridge.
 
-## Quick Start
+## Quick Start (NixOS)
+
+Enable the podman daemon, this is will do all the work of docker while also
+playing nicely with nixos on VMs and WSL (if you are on non-nixos you will have to find out how to get/run this daemon).
+
+``` nix
+# In your configuration.nix
+virtualisation.podman.enable = true;
+virtualisation.podman.dockerCompat = true;
+virtualisation.podman.dockerSocket.enable = true;
+```
+
+Also make sure you are part of the podman group:
+
+``` nix
+users.users.${defaultUser} = {
+    ...
+    extraGroups = [ ... "podman" ];
+};
+```
+
+After that just run
+
+``` bash
+nix-shell
+```
+
+In the directory source directory, and you are good to go!
+
+Verify things are working by running the ci integration test
+
+``` bash
+make local-ci
+```
+
+### Running locally
+
+``` bash
+# run the bridge server manually
+cd offchain-modules
+yarn install
+cp config.json.example config.json
+```
+
+The default config uses some directories we probably don't want, you are going to want
+to change the logFile location to something local or at least in ~ and you are going to wanna change the keystore path as well.
+
+To launch a verifier database (see the config.json entry for "orm")
+you can just do: 
+
+``` bash
+docker exec docker_mysql_1 bash -c "mysql -uroot -proot -e 'create database <database>'"
+```
+
+And to remove it:
+
+``` bash
+docker exec docker_mysql_1 bash -c "mysql -uroot -proot -e 'drop database if exists <database>"
+```
+
+Where <database> is the database entry in the orm part of your config. We may change this to use something more our speed like postgresql, but for now this is what is in the box of force-bridge.
+
+> These commands were adapted from offchain-modules/packages/scripts/src/integration.ts in the handleDb function line 29, and will likely get boxed up into something later.
+
+After you have some form of database running that matches your spec you are free to run force-bridge by doing:
+
+``` bash
+yarn start
+```
+
+When you are in the offchain-modules directory.
+
+Now you are free to hack on force-bridge.
+
+## Quick Start (Non NixOS)
 
 ### Install Development Tools
 
