@@ -85,6 +85,13 @@ When you are in the offchain-modules directory.
 
 Now you are free to hack on force-bridge.
 
+### Troubleshooting `yarn start`
+
+If yarn start fails you can't really know why, so here are the biggest 3 things:
+- Your keystore file doesn't exist: Make sure your keystore file actually exists, even if it is empty or just contains `{}`
+- Your paths aren't absolute paths: Yes you heard me, make sure your paths are absolute, don't ~ do /home/\<username\>
+- Your database isn't started or the name of it doesn't match in the config you created: Fix that, also check the port etc and that the database is running.
+
 ## Quick Start (Non NixOS)
 
 ### Install Development Tools
