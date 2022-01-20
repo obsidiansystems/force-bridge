@@ -87,10 +87,14 @@ Now you are free to hack on force-bridge.
 
 ### Troubleshooting `yarn start`
 
-If yarn start fails you can't really know why, so here are the biggest 3 things:
+If yarn start fails, there is no error telling you why, only that it failed. So here are the biggest 3 things:
 - Your keystore file doesn't exist: Make sure your keystore file actually exists, even if it is empty or just contains `{}`
 - Your paths aren't absolute paths: Yes you heard me, make sure your paths are absolute, don't ~ do /home/\<username\>
 - Your database isn't started or the name of it doesn't match in the config you created: Fix that, also check the port etc and that the database is running.
+- You must set the environment variable CONFIG_PATH to the full path to your config.json created in the copy step
+- Make local-ci has to have been run before you can interact with the docker_mysql_1 container
+- Ensure your keystore has a {}
+- Commiting code doesn't work unless you do it from the nix-shell
 
 ## Quick Start (Non NixOS)
 
