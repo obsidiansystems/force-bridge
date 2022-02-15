@@ -255,6 +255,19 @@ export class ForceBridgeAPIV1Handler implements API.ForceBridgeAPIV1 {
           },
         };
       }
+      case 'Cardano': {
+        // use Ada's asset interface to reference the core config which holds bridge fees
+        const asset = new AdaAsset(payload.xchainAssetIdent);
+        const bridgeFee = asset.getBridgeFee('in');
+        return {
+          fee: {
+            network: 'Nervos',
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            ident: getTokenShadowIdent('Cardano', payload.xchainAssetIdent)!,
+            amount: bridgeFee,
+          },
+        };
+      }
       default:
         throw new Error('invalid bridge chain type');
     }
@@ -273,6 +286,18 @@ export class ForceBridgeAPIV1Handler implements API.ForceBridgeAPIV1 {
         return {
           fee: {
             network: 'Ethereum',
+            ident: payload.xchainAssetIdent,
+            amount: bridgeFee,
+          },
+        };
+      }
+      case 'Cardano': {
+        // use Ada's asset interface to reference the core config which holds bridge fees
+        const asset = new AdaAsset(payload.xchainAssetIdent);
+        const bridgeFee = asset.getBridgeFee('out');
+        return {
+          fee: {
+            network: 'Cardano',
             ident: payload.xchainAssetIdent,
             amount: bridgeFee,
           },

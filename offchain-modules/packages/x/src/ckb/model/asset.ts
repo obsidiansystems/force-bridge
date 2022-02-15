@@ -86,8 +86,10 @@ export abstract class Asset {
       case ChainType.EOS:
       case ChainType.TRON:
       case ChainType.POLKADOT:
-      case ChainType.CARDANO:
-        return '0';
+      case ChainType.CARDANO: {
+        if (direction === 'in') return ForceBridgeCore.config.ada.bridgeFeeIn;
+        return ForceBridgeCore.config.ada.bridgeFeeOut;
+      }
     }
   }
   public getHumanizedDescription(amount: string): string {

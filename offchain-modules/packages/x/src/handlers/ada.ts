@@ -1,12 +1,12 @@
 import { ApiTransaction } from 'cardano-wallet-js';
-import { ChainType } from '../ckb/model/asset';
+import { ChainType, AdaAsset } from '../ckb/model/asset';
 import { forceBridgeRole } from '../config';
 import { ForceBridgeCore } from '../core';
 import { AdaDb, KVDb, BridgeFeeDB } from '../db';
 import { AdaUnlockStatus } from '../db/entity/AdaUnlock';
 import { AdaUnlock, IAdaUnlock } from '../db/model';
 import { BridgeMetricSingleton, txTokenInfo } from '../metric/bridge-metric';
-import { asyncSleep, foreverPromise, fromHexString, retryPromise, uint8ArrayToString } from '../utils';
+import { asyncSleep, foreverPromise, retryPromise } from '../utils';
 import { logger } from '../utils/logger';
 import { AdaChain } from '../xchain/ada';
 
@@ -120,8 +120,8 @@ export class AdaHandler {
       logger.info(`update lock record ${txHash} status, confirmed number: ${confirmedNumber}, status: ${confirmed}`);
     }
     if (confirmed && this.role === 'collector') {
-      // TODO: calculate bridgeFee
-      const bridgeFee = 1000; // asset.getBridgeFee('in');
+      const asset = new AdaAsset(token);
+      const bridgeFee = asset.getBridgeFee('in');
       const mintRecords = {
         id: uniqueId,
         lockBlockHeight: blockNumber,
@@ -138,7 +138,8 @@ export class AdaHandler {
 
   async watchNewTransactions(): Promise<void> {
     logger.info(`AdaHandler watchNewTransactions init`);
-    let { lastConfirmedTxTime, lastConfirmedTxHash } = await this.adaDb.getLatestBlockTime();
+    const block = await this.adaDb.getLatestBlockTime();
+    const lastConfirmedTxTime = block.lastConfirmedTxTime;
     foreverPromise(
       async () => {
         const { node } = await this.adaChain.getCurrentSlotNumber();
@@ -167,14 +168,7 @@ export class AdaHandler {
             }
             case 'in_ledger': {
               if (tx.inserted_at != undefined) {
-                const insertedAt = tx.inserted_at.absolute_slot_number;
-                const confirmedNumber = currentHeight - insertedAt;
-                const confirmed = confirmedNumber >= ForceBridgeCore.config.ada.confirmNumber;
                 await this.handleTx(tx, currentHeight);
-                if (confirmed) {
-                  lastConfirmedTxTime = tx.inserted_at.time;
-                  lastConfirmedTxHash = tx.id;
-                }
               } else {
                 throw new Error('watchNewTransactions: tx.inserted_at in undefined');
               }

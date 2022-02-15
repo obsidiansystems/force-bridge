@@ -1,11 +1,11 @@
-import * as CardanoWasm from '@emurgo/cardano-serialization-lib-nodejs';
+// import * as CardanoWasm from '@emurgo/cardano-serialization-lib-nodejs';
 import { asyncSleep } from '@force-bridge/x/dist/utils';
 import { logger } from '@force-bridge/x/dist/utils/logger';
 import CKB from '@nervosnetwork/ckb-sdk-core';
 import { WalletServer, Seed, AddressWallet, ShelleyWallet } from 'cardano-wallet-js';
 import { JSONRPCClient } from 'json-rpc-2.0';
 import fetch from 'node-fetch/index';
-import { prepareCkbPrivateKeys, prepareCkbAddresses, burn, checkTx } from './eth_batch_test';
+import { prepareCkbPrivateKeys, prepareCkbAddresses, checkTx } from './eth_batch_test';
 
 export async function cardanoBatchTest(
   ckbPrivateKey: string,
@@ -129,7 +129,7 @@ async function lock(
   const bridgeAddr = [new AddressWallet(adaForceBridgeAddr)];
   for (let i = 0; i < batchNum; i++) {
     await adaWallet.refresh();
-    const metadata: any = { 0: recipients[i] };
+    const metadata = { 0: recipients[i] };
     logger.info('adaBatchTest sending payment:', i);
     const transaction = await adaWallet.sendPayment(passphrase, bridgeAddr, [lockAmount], metadata);
     lockTxHashes.push(transaction.id);
@@ -148,5 +148,88 @@ async function check(
 ): Promise<void> {
   for (let i = 0; i < batchNum; i++) {
     await checkTx(client, 'ada', txHashes[i], addresses[i], 'Cardano');
+  }
+}
+
+export async function burn(
+  ckb: CKB,
+  client: JSONRPCClient,
+  ckbPrivs: Array<string>,
+  senders: Array<string>,
+  recipient: string,
+  ethTokenAddress: string,
+  burnAmount: string,
+  network: string,
+  intervalMs = 0,
+): Promise<Array<string>> {
+  const batchNum = ckbPrivs.length;
+  const burnTxHashes = new Array<string>();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const signedBurnTxs = new Array<any>();
+  for (let i = 0; i < batchNum; i++) {
+    const burnTx = await generateBurnTx(
+      ckb,
+      client,
+      ethTokenAddress,
+      ckbPrivs[i],
+      senders[i],
+      recipient,
+      burnAmount,
+      network,
+    );
+    signedBurnTxs.push(burnTx);
+  }
+
+  for (let i = 0; i < batchNum; i++) {
+    const burnETHTxHash = await ckb.rpc.sendTransaction(signedBurnTxs[i], 'passthrough');
+    await asyncSleep(intervalMs);
+    burnTxHashes.push(burnETHTxHash);
+  }
+  logger.info('burn txs', burnTxHashes);
+  return burnTxHashes;
+}
+
+export async function generateBurnTx(
+  ckb: CKB,
+  client: JSONRPCClient,
+  asset: string,
+  ckbPriv: string,
+  sender: string,
+  recipient: string,
+  amount: string,
+  network: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): Promise<any> {
+  const feePayload = {
+    network: 'Cardano',
+    xchainAssetIdent: asset,
+    amount: 200000,
+  };
+  const inFee = await client.request('getBridgeInNervosBridgeFee', feePayload);
+  const outFee = await client.request('getBridgeOutNervosBridgeFee', feePayload);
+  logger.info('burn fee in', inFee);
+  logger.info('burn fee out', outFee);
+  const burnPayload = {
+    network: network,
+    sender: sender,
+    recipient: recipient,
+    asset: asset,
+    amount: amount,
+  };
+
+  for (let i = 0; i < 5; i++) {
+    try {
+      const unsignedBurnTx = await client.request('generateBridgeOutNervosTransaction', burnPayload);
+      logger.info('unsignedBurnTx ', unsignedBurnTx);
+
+      const signedTx = ckb.signTransaction(ckbPriv)(unsignedBurnTx.rawTransaction);
+      logger.info('signedTx', signedTx);
+      return signedTx;
+    } catch (e) {
+      if (i == 4) {
+        throw e;
+      }
+      logger.error('generateBridgeOutNervosTransaction error', e);
+    }
   }
 }
