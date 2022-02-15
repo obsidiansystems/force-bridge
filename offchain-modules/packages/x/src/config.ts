@@ -111,6 +111,8 @@ export interface AdaConfig {
   startBlockHeight: number;
   networkId: number;
   privateKey?: string;
+  bridgeFeeOut: string;
+  bridgeFeeIn: string;
 }
 
 export interface logConfig {

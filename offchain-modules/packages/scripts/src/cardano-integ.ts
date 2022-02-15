@@ -1,18 +1,15 @@
-import fs from 'fs';
 import path from 'path';
 import * as CardanoWasm from '@emurgo/cardano-serialization-lib-nodejs';
-import { ValInfos } from '@force-bridge/cli/src/changeVal';
 import { KeyStore } from '@force-bridge/keystore/dist';
 import { OwnerCellConfig } from '@force-bridge/x/dist/ckb/tx-helper/deploy';
-import { AdaConfig, Config, WhiteListEthAsset, CkbDeps } from '@force-bridge/x/dist/config';
+import { Config, CkbDeps } from '@force-bridge/x/dist/config';
 import { asyncSleep, privateKeyToCkbPubkeyHash, writeJsonToFile, genRandomHex } from '@force-bridge/x/dist/utils';
 import { logger, initLog } from '@force-bridge/x/dist/utils/logger';
 import * as utils from '@force-bridge/x/dist/xchain/ada/utils';
-import { AdaChain } from '@force-bridge/x/dist/xchain/ada/wallet-interface';
 import * as lodash from 'lodash';
 import * as shelljs from 'shelljs';
 import { handleDb, startVerifierService } from './integration';
-import { execShellCmd, pathFromProjectRoot } from './utils';
+import { pathFromProjectRoot } from './utils';
 import { cardanoBatchTest } from './utils/cardano_batch_test';
 import { deployDev, genRandomVerifierConfig, AdaVerifierConfig } from './utils/deploy-cardano';
 
@@ -200,6 +197,8 @@ async function main() {
       confirmNumber: 10,
       startBlockHeight: 1,
       networkId: utils.cardanoTestnetNetworkId(),
+      bridgeFeeIn: 20,
+      bridgeFeeOut: 30,
     },
     ckb: {
       ckbRpcUrl: 'http://127.0.0.1:8114',
@@ -232,7 +231,8 @@ async function main() {
   );
 
   const command = `FORCE_BRIDGE_KEYSTORE_PASSWORD=${FORCE_BRIDGE_KEYSTORE_PASSWORD} ${forcecli} collector -cfg ${configPath}/collector/force_bridge.json`;
-  const collectorProcess = shelljs.exec(command, { async: true });
+  // start collector process
+  shelljs.exec(command, { async: true });
   await asyncSleep(80000);
   const bridgeMultiSigAddr = getBridgeAddr(multisigConfig);
   await cardanoBatchTest(
